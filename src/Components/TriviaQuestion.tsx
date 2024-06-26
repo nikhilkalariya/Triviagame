@@ -2,8 +2,9 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { loadQuestions, answerQuestion, nextQuestion } from "../store/triviaSlice";
+import { setQuestions, answerQuestion, nextQuestion } from "../store/triviaSlice";
 import { RootState } from "../store";
+import { fetchTriviaQuestion } from "../Services/triviaservice";
 
 const TriviaQuestion = () => {
     const dispatch = useDispatch();
@@ -20,8 +21,17 @@ const TriviaQuestion = () => {
     const [result, setResult] = useState<string | null>(null);
 
     useEffect(() => {
-        dispatch(loadQuestions());
-    }, [dispatch]);
+        const fetchQuestions = async () => {
+            try {
+                const response = await fetchTriviaQuestion();
+                dispatch(setQuestions(response.results));
+            } catch (error) {
+                console.error('Failed to fetch trivia questions:', error);
+            }
+        };
+
+        fetchQuestions();
+    }, []);
 
     const handleAnswerChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setSelectedAnswer(event.target.value);
@@ -70,7 +80,7 @@ const TriviaQuestion = () => {
     const options = [
         ...currentQuestion.incorrect_answers,
         currentQuestion.correct_answer,
-    ].sort(() => Math.random() - 0.5);
+    ]
 
     return (
         <div>
@@ -81,7 +91,7 @@ const TriviaQuestion = () => {
                 </h2>
                 <p className="text-white my-2 text-xl font-medium">{currentQuestion.question}</p>
                 <form>
-                    {options.map((option, index) => (
+                    {options?.map((option, index) => (
                         <div key={index}>
                             <label className="flex gap-2">
                                 <input
